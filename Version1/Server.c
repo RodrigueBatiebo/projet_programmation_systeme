@@ -53,27 +53,36 @@ int main(){
         exit(1);
     }
 
-    //reception du message
+
+    //reception du message d'un client et reponse du serveur
     char buffer[BUFFER_size] = {0};
-    int message_recu = recv(client_connecte,buffer,BUFFER_size,0);
-    if(message_recu == -1){
-        fprintf(stderr,"(SERVEUR) echec de reception du message'\n");
-        exit(1);
+    while(1){
+
+        memset(buffer,0,BUFFER_size);
+        int message_recu = recv(client_connecte,buffer,BUFFER_size,0);
+        if (message_recu <= 0) { 
+            puts("(SERVEUR) Connexion fermée par le client.");
+            break;
+
+        }
+        printf("client : %s\n",buffer);
+
+        //si le client envoi /quit, on ferme
+        if (strcmp(buffer, "/quit") == 0) { 
+            puts("(SERVEUR) Déconnexion demandée par le client.");
+            break; 
+        }
+
+        // reponse du seveur au client: envoi du meme message 
+        if (send(client_connecte, buffer, strlen(buffer), 0) == -1) { 
+            perror("(SERVEUR) Erreur d'envoi");
+            break; 
+        }
     }
-    printf("client : %s\n",buffer);
+        //fermeture et liberation des ressources
+        close(client_connecte);
+        close(socketserver);
+        
 
-    //envoi du meme message
-    //const char message[] = "bonjour client,je suis le server";
-    int message_envoye = send(client_connecte,buffer,strlen(buffer),0);
-    if(message_envoye == -1){
-        fprintf(stderr,"(SERVEUR) echec d'envoi' du message'\n");
-        exit(1);
-    }
-
-    //fermeture et liberation des ressources
-    close(client_connecte);
-    close(socketserver);
-    
-
-    return 0;
+        return 0;
 }

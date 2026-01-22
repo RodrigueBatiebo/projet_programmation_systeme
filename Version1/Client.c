@@ -42,21 +42,38 @@ int main(void){
         exit(1);
     }
 
-    //envoi d'un message au serveur
-    const char message[] = "hello world!";
-    int message_envoye = send(socketclient,message,strlen(message),0);
-    if(message_envoye == -1){
-        fprintf(stderr,"(CLIENT) echec d'envoi du message au serveur'\n");
-        exit(1);
-    } 
-    // reception d'un message 
+    //envoi d'un message au serveur et reception d'un message du serveur
     char buffer[BUFFER_size] = {0};
-    int message_recu = recv(socketclient,buffer,BUFFER_size,0);
-    if(message_recu == -1){
-        fprintf(stderr,"(CLIENT) echec de reception du message du seveur'\n");
-        exit(1);
+    while (1){
+        printf("Entrez un message ('/quit' pour quitter)");
+        fgets(buffer,BUFFER_size,stdin);
+        buffer[strcspn(buffer,"\n")] = '\0'; //supprime le \n
+
+        //envoi du message
+        if(send(socketclient,buffer,strlen(buffer),0) == -1){
+            perror("(CLIENT) Erreur d'envoi");
+            break;
+        }
+
+        if(strcmp(buffer,"/quit") == 0){
+            puts("(CLIENT) Déconnexion demandée.");
+            break;
+        }
+
+        //reception de message
+
+        //vider le buffer
+        memset(buffer,0,BUFFER_size);
+
+        int message_recu = recv(socketclient, buffer, BUFFER_size, 0); 
+        if (message_recu <= 0) { 
+            puts("(CLIENT) Connexion fermée par le serveur."); 
+            break; 
+        } 
+        printf("serveur : %s\n", buffer);
     }
-    printf("serveur : %s\n",buffer);
+    
+    
 
     // fermerture du socket
         close(socketclient);
