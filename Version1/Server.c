@@ -6,6 +6,8 @@
     //GNU/linux
 #include<netinet/in.h>
 #include<sys/socket.h>
+#include <arpa/inet.h>
+
 
     //constante
 #define port_ecoute 5094
@@ -52,6 +54,10 @@ int main(){
         fprintf(stderr,"(SERVEUR) echec d'etablissement de la connexion\n");
         exit(1);
     }
+    printf("(SERVEUR)  Client connecté depuis %s:%d\n",
+       inet_ntoa(clientAddress.sin_addr),    
+       ntohs(clientAddress.sin_port));      
+
 
 
     //reception du message d'un client et reponse du serveur

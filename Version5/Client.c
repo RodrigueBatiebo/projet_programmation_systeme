@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
     //GNU/linux
 #include <arpa/inet.h>
@@ -98,6 +99,35 @@ while (1) {
                 puts("(CLIENT) Déconnexion demandée.");
                 break;
             }
+            // gestion de /sendfile
+if (strncmp(buffer_envoi, "/sendfile ", 10) == 0) {
+    char *cible = strtok(buffer_envoi + 10, " ");
+    char *nom_fichier = strtok(NULL, "");
+
+    if (cible == NULL || nom_fichier == NULL) {
+        puts("(CLIENT) Usage : /sendfile <pseudo> <nom_fichier>");
+    } else {
+        int fd = open(nom_fichier, O_RDONLY);
+        if (fd == -1) {
+            perror("(CLIENT) Erreur ouverture fichier");
+        } else {
+            // informer le serveur
+            char commande[BUFFER_size];
+            snprintf(commande, sizeof(commande), "/sendfile %s %s", cible, nom_fichier);
+            send(socketclient, commande, strlen(commande), 0);
+
+            // envoyer le contenu
+            char bloc[BUFFER_size];
+            int lu;
+            while ((lu = read(fd, bloc, BUFFER_size)) > 0) {
+                send(socketclient, bloc, lu, 0);
+            }
+            close(fd);
+            puts("(CLIENT) Fichier envoyé au serveur.");
+        }
+    }
+}
+
         }
 
         // activité serveur
@@ -110,6 +140,20 @@ while (1) {
             }
             buffer_reception[recu] = '\0';
             printf("serveur : %s\n", buffer_reception);
+            // si le serveur envoie des blocs de fichier
+if (strncmp(buffer_reception, "[FILE]", 6) == 0) {
+    // ouverture du fichier local pour sauvegarde
+    int fd = open("recu.txt", O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd != -1) {
+        // enlever le tag [FILE] avant d'écrire
+        write(fd, buffer_reception + 6, recu - 6);
+        close(fd);
+        puts("(CLIENT) Fichier reçu et sauvegardé dans 'recu.txt'.");
+    } else {
+        perror("(CLIENT) Erreur écriture fichier");
+    }
+}
+
         }
     }
 }
