@@ -62,10 +62,10 @@ int main(void){
     puts("Commandes disponibles :");
     puts("  /who       → liste des utilisateurs");
     puts("  /whois nom → infos sur un utilisateur");
-    puts("  /all message      → broadcast à tous sauf a vous");
-    puts("  /msg pseudo → message privé");
     puts("  /create nom_salon → créer un salon");
     puts("  /join nom_salon → rejoindre un salon");
+    puts("  /msg pseudo → message privé");
+    puts("  /all message      → broadcast à tous sauf a vous");
     puts("  /leave      → quitter le salon");
     puts("  /quit      → se deconnecter du serveur");
     puts("Tapez un message ou une commande ci-dessous :");
