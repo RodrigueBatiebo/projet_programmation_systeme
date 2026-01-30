@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-
 // GNU/linux
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -361,27 +360,28 @@ int main()
 
                         if (!cible || !nom_fichier)
                         {
-                            send(descripteur, "[Serveur] : Usage /sendfile <pseudo> <nom_fichier>\n", 52, 0);
+                            send(descripteur, "Usage /sendfile <pseudo> <nom_fichier>\n", 52, 0);
                         }
                         else
                         {
-                            int fd = open(nom_fichier, O_RDONLY);
-                            if (fd == -1)
+                            char chemin[200];
+                            snprintf(chemin, sizeof(chemin), "uploads/%s_%d", nom_fichier, descripteur);
+                            int fd_out = open(chemin, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                            if (fd_out == -1)
                             {
-                                send(descripteur, "[Serveur] : Fichier introuvable\n", 32, 0);
+                                send(descripteur, "Erreur création fichier\n", 30, 0);
                             }
                             else
                             {
-                                char chemin[200];
-                                snprintf(chemin, sizeof(chemin), "uploads/%s_%d", nom_fichier, descripteur);
-                                int fd_out = open(chemin, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
                                 char bloc[BUFFER_size];
                                 int lu;
-                                while ((lu = read(fd, bloc, BUFFER_size)) > 0)
+                                lu = recv(descripteur, bloc, BUFFER_size, 0);
+                                if (lu > 0)
                                 {
                                     write(fd_out, bloc, lu);
                                 }
-                                close(fd);
+
                                 close(fd_out);
 
                                 // enregistrer dans fichiers_attente
@@ -432,7 +432,7 @@ int main()
                                     int fd_in = open(fichiers_attente[k].chemin, O_RDONLY);
                                     if (fd_in == -1)
                                     {
-                                        send(descripteur, "[Serveur] : Erreur lecture fichier\n", 36, 0);
+                                        send(descripteur, "Erreur lecture fichier\n", 36, 0);
                                     }
                                     else
                                     {
@@ -440,10 +440,14 @@ int main()
                                         int lu;
                                         while ((lu = read(fd_in, bloc, BUFFER_size)) > 0)
                                         {
-                                            send(descripteur, bloc, lu, 0);
+                                            char paquet[BUFFER_size + 6];
+                                            memcpy(paquet, "[FILE]", 6);
+                                            memcpy(paquet + 6, bloc, lu);
+                                            send(descripteur, paquet, lu + 6, 0);
                                         }
+
                                         close(fd_in);
-                                        send(descripteur, "[Serveur] : ✅ Fichier reçu.\n", 30, 0);
+                                        send(descripteur, "Fichier reçu.\n", 30, 0);
 
                                         // notifier l'emetteur
                                         for (int j = 0; j < nombre_clients; j++)
@@ -451,7 +455,7 @@ int main()
                                             if (client[j].descripteur != 0 &&
                                                 strcmp(client[j].pseudo, emetteur) == 0)
                                             {
-                                                send(client[j].descripteur, "[Serveur] : ✅ Le destinataire a reçu le fichier.\n", 50, 0);
+                                                send(client[j].descripteur, "Le destinataire a reçu le fichier.\n", 50, 0);
                                                 break;
                                             }
                                         }

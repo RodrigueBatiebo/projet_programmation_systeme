@@ -176,7 +176,7 @@ int main(){
                         {
                             char *recherche = tampon + 7;
                             int trouve;
-                            for (int j = 0; j < nombre_clients; i++)
+                            for (int j = 0; j < nombre_clients; j++)
                             {
                                 if (client[i].descripteur != 0 && strcmp(client[j].pseudo,recherche) == 0)
                                 {
